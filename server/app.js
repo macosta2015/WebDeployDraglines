@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors'); // Import the cors package
 const { getDb, connectToDb } = require('./db');
 const { ObjectId } = require('mongodb');
+require ('dotenv').config();
 
 // init app & middleware
 const app = express();
@@ -18,7 +19,7 @@ let db;
 
 connectToDb((err) => {
   if (!err) {
-    app.listen('3000', () => {
+    app.listen(process.env.PORT || '3000', () => {
       console.log('app listening on port 3000');
     });
     db = getDb();
