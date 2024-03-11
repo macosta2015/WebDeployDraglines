@@ -8,9 +8,10 @@ require ('dotenv').config();
 const app = express();
 app.use(express.json());
 
+
 // Set up CORS middleware
 app.use(cors({
-  origin: 'http://localhost:3001', // Allow requests from this origin
+  origin: ['http://localhost:3001', '*'], // Allow requests from http://localhost:3001 and any other origin
   // Other CORS options...
 }));
 
