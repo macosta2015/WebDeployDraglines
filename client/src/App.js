@@ -1,54 +1,52 @@
 import React, { useState } from 'react';
-import axios from 'axios'; // Import Axios
 import GeoLocation from './components/GeoLocation.js'; // Import the GeoLocation component
-import Button from './components/Example.js'; // Import the Button component
+import './components/App.css'; // Import the CSS file
 
 function App() {
-  const [fetchingLocation, setFetchingLocation] = useState(false);
-  const [coordinates, setCoordinates] = useState(null);
+  const [fetchingLocation, setFetchingLocation] = useState(false); // Tracks whether location fetching is in progress
+  const [coordinates, setCoordinates] = useState(null); // Stores the fetched coordinates
 
-  const handleClick = async () => {
-    setFetchingLocation(true);
-    try {
-      // Assume GeoLocation returns an object with latitude and longitude
-      const { latitude, longitude } = await getGeoLocation();
-      setCoordinates({ latitude, longitude });
-
-      // Save coordinates to the backend
-      onSaveCoordinates({ latitude, longitude }); // Call onSaveCoordinates to send data to backend
-
-      console.log("Coordinates saved:", { latitude, longitude });
-    } catch (error) {
-      console.error('Error saving coordinates:', error);
-    } finally {
-      setFetchingLocation(false);
-    }
+  const handleClick = () => {
+    setFetchingLocation(true); // Set the state to start fetching the location
   };
 
-  const onSaveCoordinates = async (data) => {
-    try {
-      // Make a POST request to the backend endpoint '/Draglines'
-      await axios.post('https://draglines-location-59e04617b209.herokuapp.com/', data); // Update the URL to match your backend endpoint
-      // await axios.post('http://localhost:3000/Draglines', data); // Update the URL to match your backend endpoint
-    } catch (error) {
-      console.error('Error saving coordinates:', error);
-    }
-  };
-
-  const getGeoLocation = async () => {
-    // Simulated function to get geolocation
-    return { latitude: 27.994402, longitude: -81.760254 }; // Example coordinates for Florida
+  const onSaveCoordinates = (data) => {
+    // Mocking the API response by directly saving the data locally
+    console.log('Mocking API call with data:', data); // Log the data for debugging
+    setCoordinates(data); // Save the data for display
+    setFetchingLocation(false); // Stop fetching
   };
 
   return (
     <div className="App">
       <header className="App-header">
-        <GeoLocation fetching={fetchingLocation} onSaveCoordinates={onSaveCoordinates} /> {/* Pass onSaveCoordinates as prop */}
-        <Button onClick={handleClick} />
+        <h1>GeoLocation Tracker with SPCS</h1>
+        <p className="status-message">
+          {fetchingLocation
+            ? "Fetching your location..." // Show a message while fetching
+            : "Click the button to fetch your location."}
+        </p>
+        <button onClick={handleClick} disabled={fetchingLocation}>
+          {fetchingLocation ? "Fetching..." : "Get Location"}
+        </button>
+        <GeoLocation fetching={fetchingLocation} onSaveCoordinates={onSaveCoordinates} />
+        {coordinates && (
+          <div className="coordinates-display">
+            <p>Latitude: {coordinates.latitude}</p>
+            <p>Longitude: {coordinates.longitude}</p>
+            {coordinates.statePlaneX !== undefined && coordinates.statePlaneY !== undefined ? (
+              <>
+                <p>State Plane X: {coordinates.statePlaneX.toFixed(2)}</p>
+                <p>State Plane Y: {coordinates.statePlaneY.toFixed(2)}</p>
+              </>
+            ) : (
+              <p>Florida Coordinates are not available.</p>
+            )}
+          </div>
+        )}
       </header>
     </div>
   );
 }
 
 export default App;
-
