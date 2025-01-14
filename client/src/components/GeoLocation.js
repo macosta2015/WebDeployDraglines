@@ -3,10 +3,13 @@ import proj4 from 'proj4';
 
 // Define the projection for WGS84 (latitude and longitude) and the Florida East zone
 proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
-proj4.defs("EPSG:2236", "+proj=tmerc +lat_0=24.33333333333333 +lon_0=-81 +k=0.999941177 +x_0=200000.0001016 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs");
+proj4.defs(
+  "EPSG:2236",
+  "+proj=tmerc +lat_0=24.33333333333333 +lon_0=-81 +k=0.999941177 +x_0=200000.0001016 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs"
+);
 
+// Function to convert latitude/longitude to State Plane Coordinates
 function latLonToStatePlane(latitude, longitude) {
-  // Convert from WGS84 (latitude and longitude) to State Plane Coordinate System (Florida East zone)
   const coordinates = proj4("EPSG:4326", "EPSG:2236", [longitude, latitude]);
   return { x: coordinates[0], y: coordinates[1] };
 }
@@ -15,36 +18,42 @@ function GeoLocation({ fetching, onSaveCoordinates }) {
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
   const [error, setError] = useState(null);
-  const [coordinatesList, setCoordinatesList] = useState([]);
 
   useEffect(() => {
     if (fetching) {
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
-          position => {
-            setLatitude(position.coords.latitude);
-            setLongitude(position.coords.longitude);
+          (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            setLatitude(lat);
+            setLongitude(lon);
+
+            // Convert latitude/longitude to Florida Coordinate System
+            const spcsCoordinates = latLonToStatePlane(lat, lon);
+
+            // Log the Florida Coordinates for debugging
+            console.log("State Plane Coordinates:", spcsCoordinates);
+
+            // Pass the geographic and SPCS coordinates to the parent component
+            onSaveCoordinates({
+              latitude: lat,
+              longitude: lon,
+              statePlaneX: spcsCoordinates.x,
+              statePlaneY: spcsCoordinates.y,
+            });
           },
-          error => {
-            setError(error.message);
-            console.error("Error getting geolocation:", error);
+          (err) => {
+            setError(err.message);
+            console.error("Error fetching geolocation:", err);
           }
         );
       } else {
-        setError("Geolocation is not supported by your browser");
-        console.log("Geolocation is not supported by your browser");
+        setError("Geolocation is not supported by your browser.");
+        console.error("Geolocation is not supported by your browser.");
       }
     }
-  }, [fetching]);
-
-  const handleSaveCoordinates = () => {
-    if (latitude !== null && longitude !== null) {
-      const spcsCoordinates = latLonToStatePlane(latitude, longitude);
-      setCoordinatesList([...coordinatesList, spcsCoordinates]);
-      // Pass the coordinates data to the parent component (App.js)
-      onSaveCoordinates({ latitude, longitude, statePlaneX: spcsCoordinates.x, statePlaneY: spcsCoordinates.y });
-    }
-  };
+  }, [fetching, onSaveCoordinates]);
 
   return (
     <div>
@@ -53,20 +62,13 @@ function GeoLocation({ fetching, onSaveCoordinates }) {
         <p>Error: {error}</p>
       ) : (
         <div>
-          {latitude !== null && longitude !== null && (
-            <div>
-              <p>Latitude: {latitude}, Longitude: {longitude}</p>
-              <button onClick={handleSaveCoordinates}>Save Coordinates</button>
-            </div>
+          {latitude && longitude && (
+            <p>
+              Latitude: {latitude}, Longitude: {longitude}
+            </p>
           )}
         </div>
       )}
-      <h3>Florida Coordinate System:</h3>
-      <ul>
-        {coordinatesList.map((coordinates, index) => (
-          <li key={index}>X: {coordinates.x.toFixed(2)}, Y: {coordinates.y.toFixed(2)}</li>
-        ))}
-      </ul>
     </div>
   );
 }
