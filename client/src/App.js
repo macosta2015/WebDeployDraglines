@@ -1,34 +1,25 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import GeoLocation from './components/GeoLocation.js';
 
 function App() {
   const [fetchingLocation, setFetchingLocation] = useState(false);
   const [coordinates, setCoordinates] = useState(null);
 
-  const handleClick = async () => {
+  const handleClick = () => {
     setFetchingLocation(true);
-    try {
-      const { latitude, longitude } = await getGeoLocation();
-      setCoordinates({ latitude, longitude });
-      onSaveCoordinates({ latitude, longitude });
-      console.log("Coordinates saved:", { latitude, longitude });
-    } catch (error) {
-      console.error('Error saving coordinates:', error);
-    } finally {
-      setFetchingLocation(false);
-    }
   };
 
   const onSaveCoordinates = async (data) => {
     try {
       await axios.post('https://draglines-location-59e04617b209.herokuapp.com/', data);
+      setCoordinates(data); // Save the data for display
+      console.log('Coordinates saved:', data);
     } catch (error) {
       console.error('Error saving coordinates:', error);
+    } finally {
+      setFetchingLocation(false);
     }
-  };
-
-  const getGeoLocation = async () => {
-    return { latitude: 27.994402, longitude: -81.760254 }; // Example coordinates for Florida
   };
 
   return (
@@ -90,16 +81,21 @@ function App() {
       </style>
 
       <header className="App-header">
-        <h1>GeoLocation Tracker</h1>
+        <h1>GeoLocation Tracker with SPCS</h1>
         <p className="status-message">
           {fetchingLocation
             ? "Fetching your location..."
             : "Click the button to fetch your location."}
         </p>
-        <button onClick={handleClick}>Get Location</button>
+        <button onClick={handleClick} disabled={fetchingLocation}>
+          {fetchingLocation ? "Fetching..." : "Get Location"}
+        </button>
+        <GeoLocation fetching={fetchingLocation} onSaveCoordinates={onSaveCoordinates} />
         {coordinates && (
           <p className="coordinates-display">
             Latitude: {coordinates.latitude}, Longitude: {coordinates.longitude}
+            <br />
+            State Plane X: {coordinates.statePlaneX.toFixed(2)}, Y: {coordinates.statePlaneY.toFixed(2)}
           </p>
         )}
       </header>
@@ -108,62 +104,4 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-// import React, { useState } from 'react';
-// import axios from 'axios'; // Import Axios
-// import GeoLocation from './components/GeoLocation.js'; // Import the GeoLocation component
-// import Button from './components/Example.js'; // Import the Button component
-
-// function App() {
-//   const [fetchingLocation, setFetchingLocation] = useState(false);
-//   const [coordinates, setCoordinates] = useState(null);
-
-//   const handleClick = async () => {
-//     setFetchingLocation(true);
-//     try {
-//       // Assume GeoLocation returns an object with latitude and longitude
-//       const { latitude, longitude } = await getGeoLocation();
-//       setCoordinates({ latitude, longitude });
-
-//       // Save coordinates to the backend
-//       onSaveCoordinates({ latitude, longitude }); // Call onSaveCoordinates to send data to backend
-
-//       console.log("Coordinates saved:", { latitude, longitude });
-//     } catch (error) {
-//       console.error('Error saving coordinates:', error);
-//     } finally {
-//       setFetchingLocation(false);
-//     }
-//   };
-
-//   const onSaveCoordinates = async (data) => {
-//     try {
-//       // Make a POST request to the backend endpoint '/Draglines'
-//       await axios.post('https://draglines-location-59e04617b209.herokuapp.com/', data); // Update the URL to match your backend endpoint
-//       // await axios.post('http://localhost:3000/Draglines', data); // Update the URL to match your backend endpoint
-//     } catch (error) {
-//       console.error('Error saving coordinates:', error);
-//     }
-//   };
-
-//   const getGeoLocation = async () => {
-//     // Simulated function to get geolocation
-//     return { latitude: 27.994402, longitude: -81.760254 }; // Example coordinates for Florida
-//   };
-
-//   return (
-//     <div className="App">
-//       <header className="App-header">
-//         <GeoLocation fetching={fetchingLocation} onSaveCoordinates={onSaveCoordinates} /> {/* Pass onSaveCoordinates as prop */}
-//         <Button onClick={handleClick} />
-//       </header>
-//     </div>
-//   );
-// }
-
-// export default App;
 
